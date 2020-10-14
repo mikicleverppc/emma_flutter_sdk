@@ -39,10 +39,8 @@ class EmmaFlutterSdkPlugin : FlutterPlugin, MethodCallHandler {
       "startSession" -> {
         var sessionKey = call.argument<String>("sessionKey") ?: return returnError(result, call.method, "sessionKey")
         var debugEnabled = call.argument<Boolean>("debugEnabled") ?: return returnError(result, call.method, "debugEnabled")
-
-
+        
         val configuration = EMMA.Configuration.Builder(applicationContext)
-                .setWebServiceUrl("https://api-staging.emma.io")
                 .setSessionKey(sessionKey)
                 .setQueueTime(25)
                 .setDebugActive(debugEnabled)
@@ -61,6 +59,11 @@ class EmmaFlutterSdkPlugin : FlutterPlugin, MethodCallHandler {
         }
 
         EMMA.getInstance().trackEvent(eventRequest)
+        result.success(null)
+      }
+      "trackExtraUserInfo" -> {
+        var userAttributes = call.argument<Map<String, String>>("extraUserInfo") ?: return returnError(result, call.method, "extraUserInfo")
+        EMMA.getInstance().trackExtraUserInfo(userAttributes)
         result.success(null)
       }
       else -> {

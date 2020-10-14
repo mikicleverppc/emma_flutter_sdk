@@ -53,7 +53,7 @@ public class SwiftEmmaFlutterSdkPlugin: NSObject, FlutterPlugin {
         
         guard let eventToken = args["eventToken"] as? String else {
             result(FlutterError.init(code: "BAD_ARGS",
-                                    message: "Can't find Session Key",
+                                    message: "Can't find Event Token",
                                     details: nil))
             return
         }
@@ -64,6 +64,21 @@ public class SwiftEmmaFlutterSdkPlugin: NSObject, FlutterPlugin {
         }
         EMMA.trackEvent(eventRequest)
         result(nil)
+        break
+    case "trackExtraUserInfo":
+        guard let args = call.arguments as? Dictionary<String, AnyObject> else {
+            result(FlutterError.init(code: "BAD_ARGS",
+                                    message: "Can't find args",
+                                    details: nil))
+            return
+        }
+        guard let userAttributes = args["extraUserInfo"] as? Dictionary<String, String> else {
+            result(FlutterError.init(code: "BAD_ARGS",
+                                    message: "Can't user arguments",
+                                    details: nil))
+            return
+        }
+        EMMA.trackExtraUserInfo(userAttributes)
         break
       default:
         result(FlutterMethodNotImplemented)

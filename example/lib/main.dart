@@ -27,6 +27,8 @@ class _MyAppState extends State<MyApp> {
     try {
       await EmmaFlutterSdk.startSession('emmaflutter2BMRb2NQ0',
           debugEnabled: true);
+
+      await EmmaFlutterSdk.trackExtraUserInfo({'TEST_TAG': 'TEST VALUE'});
     } on PlatformException catch (err) {
       print("Error starting EMMA session: " + err.message);
     }

@@ -25,9 +25,16 @@ class EmmaFlutterSdk {
   /// Send an event to emma identified by [eventToken].
   /// You can also assign some attributtes to this event with [eventArguments]
   static Future<void> trackEvent(String eventToken,
-      {Object eventArguments}) async {
+      {Map<String, String> eventArguments}) async {
     await _channel.invokeMethod('trackEvent',
         {'eventToken': eventToken, 'eventArguments': eventArguments});
+    return;
+  }
+
+  /// You can complete user profile with extra parameters
+  static Future<void> trackExtraUserInfo(Map<String, String> extraUserInfo) async {
+    await _channel.invokeMethod('trackExtraUserInfo',
+        {'extraUserInfo': extraUserInfo});
     return;
   }
 }
