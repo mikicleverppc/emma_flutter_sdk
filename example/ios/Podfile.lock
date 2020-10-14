@@ -1,0 +1,29 @@
+PODS:
+  - eMMa (4.6.7)
+  - emma_flutter_sdk (1.0.0):
+    - eMMa
+    - Flutter
+  - Flutter (1.0.0)
+
+DEPENDENCIES:
+  - emma_flutter_sdk (from `.symlinks/plugins/emma_flutter_sdk/ios`)
+  - Flutter (from `Flutter`)
+
+SPEC REPOS:
+  trunk:
+    - eMMa
+
+EXTERNAL SOURCES:
+  emma_flutter_sdk:
+    :path: ".symlinks/plugins/emma_flutter_sdk/ios"
+  Flutter:
+    :path: Flutter
+
+SPEC CHECKSUMS:
+  eMMa: 1f7d187c3b5d0065ed270a9ed725858a847d721d
+  emma_flutter_sdk: 838a42803f26ee9255b2537346ed33356cc989de
+  Flutter: 0e3d915762c693b495b44d77113d4970485de6ec
+
+PODFILE CHECKSUM: aafe91acc616949ddb318b77800a7f51bffa2a4c
+
+COCOAPODS: 1.9.1
