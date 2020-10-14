@@ -2,39 +2,32 @@ import 'dart:async';
 
 import 'package:flutter/services.dart';
 
-class EMMAConfig {
-  final String sessionKey;
-
-  EMMAConfig._builder(EMMAConfigBuilder builder)
-      : sessionKey = builder.sessionKey;
-}
-
-class EMMAConfigBuilder {
-  final String sessionKey;
-
-  EMMAConfigBuilder(this.sessionKey);
-
-  EMMAConfig build() {
-    return EMMAConfig._builder(this);
-  }
-}
-
 class EmmaFlutterSdk {
   static const MethodChannel _channel = const MethodChannel('emma_flutter_sdk');
 
+  /// Retrieves current EMMA SDK Version
   static Future<String> getEMMAVersion() async {
     final String version = await _channel.invokeMethod('getEMMAVersion');
     return version;
   }
 
+  /// Starts EMMA Session with a [sessionKey].
+  ///
+  /// You can use [debugEnabled] to enable logging on your device.
+  /// This log is only visible on device consoles
   static Future<void> startSession(String sessionKey,
       {bool debugEnabled = false}) async {
-    await _channel.invokeMethod(
-      'startSession',
-      {'sessionKey': sessionKey,
-      'debugEnabled': debugEnabled
-      }
-    );
+    await _channel.invokeMethod('startSession',
+        {'sessionKey': sessionKey, 'debugEnabled': debugEnabled});
+    return;
+  }
+
+  /// Send an event to emma identified by [eventToken].
+  /// You can also assign some attributtes to this event with [eventArguments]
+  static Future<void> trackEvent(String eventToken,
+      {Object eventArguments}) async {
+    await _channel.invokeMethod('trackEvent',
+        {'eventToken': eventToken, 'eventArguments': eventArguments});
     return;
   }
 }

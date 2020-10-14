@@ -9,7 +9,8 @@ For more information about EMMA sdk you can go to https://support.emma.io
 ## Current Implementation
 
 - [x] Session Tracking (Start Session)
-- [ ] Event Tracking
+- [x] Event Tracking
+- [ ] Update User Profile
 - [ ] Powlink Support
 - [ ] Push System Support
 - [ ] Native Ads

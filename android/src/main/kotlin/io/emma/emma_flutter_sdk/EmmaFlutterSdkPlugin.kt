@@ -3,6 +3,7 @@ package io.emma.emma_flutter_sdk
 import android.app.Application
 import android.content.Context
 import androidx.annotation.NonNull
+import androidx.annotation.Nullable
 
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.MethodCall
@@ -11,6 +12,7 @@ import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 import io.flutter.plugin.common.PluginRegistry.Registrar
 import io.emma.android.EMMA
+import io.emma.android.model.EMMAEventRequest
 import java.lang.Exception
 
 /** EmmaFlutterSdkPlugin */
@@ -35,22 +37,31 @@ class EmmaFlutterSdkPlugin : FlutterPlugin, MethodCallHandler {
         result.success(EMMA.getInstance().sdkVersion)
       }
       "startSession" -> {
-        var sessionKey = call.argument<String>("sessionKey")
-        var debugEnabled = call.argument<Boolean>("debugEnabled")
+        var sessionKey = call.argument<String>("sessionKey") ?: return returnError(result, call.method, "sessionKey")
+        var debugEnabled = call.argument<Boolean>("debugEnabled") ?: return returnError(result, call.method, "debugEnabled")
 
-        try {
-          val configuration = EMMA.Configuration.Builder(applicationContext)
-                  .setSessionKey(sessionKey)
-                  .setQueueTime(25)
-                  .setDebugActive(debugEnabled!!)
-                  .build()
 
-          EMMA.getInstance().startSession(configuration)
+        val configuration = EMMA.Configuration.Builder(applicationContext)
+                .setWebServiceUrl("https://api-staging.emma.io")
+                .setSessionKey(sessionKey)
+                .setQueueTime(25)
+                .setDebugActive(debugEnabled)
+                .build()
 
-          result.success("");
-        } catch (error: Exception) {
-          result.error("START_SESSION", "Error starting session", "Start session method throw an error")
+        EMMA.getInstance().startSession(configuration)
+
+        result.success(null);
+      }
+      "trackEvent" -> {
+        var eventToken = call.argument<String>("eventToken") ?: return returnError(result, call.method, "eventToken")
+        var eventRequest = EMMAEventRequest(eventToken)
+
+        call.argument<HashMap<String, Any>>("eventAttributes").let { attributes ->
+          eventRequest.attributes = attributes
         }
+
+        EMMA.getInstance().trackEvent(eventRequest)
+        result.success(null)
       }
       else -> {
         result.notImplemented()
@@ -60,5 +71,9 @@ class EmmaFlutterSdkPlugin : FlutterPlugin, MethodCallHandler {
 
   override fun onDetachedFromEngine(@NonNull binding: FlutterPlugin.FlutterPluginBinding) {
     channel.setMethodCallHandler(null)
+  }
+
+  private fun returnError(@NonNull result: Result, methodName: String, @Nullable parameter: String? = null) {
+    result.error("METHOD_ERROR", "Error in: $methodName", "Error in parameter: $parameter" ?: null)
   }
 }

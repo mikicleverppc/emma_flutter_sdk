@@ -24,16 +24,14 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<void> initEMMA() async {
-   
     try {
-      await EmmaFlutterSdk.startSession('emmaflutter2BMRb2NQ0', debugEnabled: true);
-    } on PlatformException catch(err) {
-      print("Error starting EMMA session: "+err.message);
+      await EmmaFlutterSdk.startSession('emmaflutter2BMRb2NQ0',
+          debugEnabled: true);
+    } on PlatformException catch (err) {
+      print("Error starting EMMA session: " + err.message);
     }
 
-    setState(() {
-     
-    });
+    setState(() {});
   }
 
   // Platform messages are asynchronous, so we initialize in an async method.
@@ -64,8 +62,15 @@ class _MyAppState extends State<MyApp> {
           title: const Text('EMMA FLUTTER SAMPLE APP'),
         ),
         body: Center(
-            child: Row(children: <Widget>[
-          Text('EMMA SDK RELEASE: $_platformVersion\n')
+            child: Column(children: <Widget>[
+          RaisedButton(
+            onPressed: () async {
+              await EmmaFlutterSdk.trackEvent(
+                  "2eb78caf404373625020285e92df446b");
+            },
+            child:
+                const Text('Send Test Event', style: TextStyle(fontSize: 20)),
+          ),
         ])),
       ),
     );
