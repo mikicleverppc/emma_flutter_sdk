@@ -73,6 +73,27 @@ class _MyAppState extends State<MyApp> {
             child:
                 const Text('Send Test Event', style: TextStyle(fontSize: 20)),
           ),
+          RaisedButton(
+            onPressed: () async {
+              await EmmaFlutterSdk.loginUser("1", "emma@flutter.dev");
+            },
+            child:
+                const Text('Send Login Event', style: TextStyle(fontSize: 20)),
+          ),
+          RaisedButton(
+            onPressed: () async {
+              await EmmaFlutterSdk.registerUser("1", "emma@flutter.dev");
+            },
+            child: const Text('Send Register Event',
+                style: TextStyle(fontSize: 20)),
+          ),
+          RaisedButton(
+            onPressed: () async {
+              await EmmaFlutterSdk.inAppMessage(InAppType.startview);
+            },
+            child: const Text('Check For StartView',
+                style: TextStyle(fontSize: 20)),
+          )
         ])),
       ),
     );

@@ -80,9 +80,83 @@ public class SwiftEmmaFlutterSdkPlugin: NSObject, FlutterPlugin {
         }
         EMMA.trackExtraUserInfo(userAttributes)
         break
+    case "loginUser":
+        guard let args = call.arguments as? Dictionary<String, AnyObject> else {
+            result(FlutterError.init(code: "BAD_ARGS",
+                                    message: "Can't find args",
+                                    details: nil))
+            return
+        }
+        
+        guard let userId = args["userId"] as? String else {
+            result(FlutterError.init(code: "BAD_ARGS",
+                                    message: "Can't get userId",
+                                    details: nil))
+            return
+        }
+        
+        let email = args["email"] as? String ?? ""
+        
+        EMMA.loginUser(userId, forMail: email)
+        break
+    case "registerUser":
+        guard let args = call.arguments as? Dictionary<String, AnyObject> else {
+            result(FlutterError.init(code: "BAD_ARGS",
+                                    message: "Can't find args",
+                                    details: nil))
+            return
+        }
+        
+        guard let userId = args["userId"] as? String else {
+            result(FlutterError.init(code: "BAD_ARGS",
+                                    message: "Can't get userId",
+                                    details: nil))
+            return
+        }
+        
+        let email = args["email"] as? String ?? ""
+        
+        EMMA.registerUser(userId, forMail: email)
+        break
+    case "inAppMessage":
+        
+        guard let args = call.arguments as? Dictionary<String, AnyObject> else {
+            result(FlutterError.init(code: "BAD_ARGS",
+                                    message: "Can't find args",
+                                    details: nil))
+            return
+        }
+        
+        guard let inAppType = args["inAppType"] as? String else {
+            result(FlutterError.init(code: "BAD_ARGS",
+                                    message: "Can't get inAppType",
+                                    details: nil))
+            return
+        }
+        
+        guard let requestType = getInAppTypeFromString(inAppType: inAppType) else {
+            result(FlutterError.init(code: "BAD_INAPP_TYPE",
+                                    message: "Unknown inapp type",
+                                    details: nil))
+            return
+        }
+        
+        let request = EMMAInAppRequest(type: requestType)
+        EMMA.inAppMessage(request)
+        
+        break
       default:
         result(FlutterMethodNotImplemented)
       break
     }
   }
+    
+    func getInAppTypeFromString(inAppType: String) -> InAppType? {
+        switch inAppType {
+        case "startview":
+            return .Startview
+        default:
+            return nil
+        }
+    }
 }

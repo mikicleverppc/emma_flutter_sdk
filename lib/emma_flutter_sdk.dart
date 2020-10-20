@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/services.dart';
 
+enum InAppType { startview }
+
 class EmmaFlutterSdk {
   static const MethodChannel _channel = const MethodChannel('emma_flutter_sdk');
 
@@ -32,9 +34,30 @@ class EmmaFlutterSdk {
   }
 
   /// You can complete user profile with extra parameters
-  static Future<void> trackExtraUserInfo(Map<String, String> extraUserInfo) async {
-    await _channel.invokeMethod('trackExtraUserInfo',
-        {'extraUserInfo': extraUserInfo});
+  static Future<void> trackExtraUserInfo(
+      Map<String, String> extraUserInfo) async {
+    await _channel
+        .invokeMethod('trackExtraUserInfo', {'extraUserInfo': extraUserInfo});
+    return;
+  }
+
+  /// Sends a login to EMMA
+  static Future<void> loginUser(String userId, String email) async {
+    await _channel
+        .invokeMethod('loginUser', {'userId': userId, 'email': email});
+    return;
+  }
+
+  /// Sends register event to EMMA
+  static Future<void> registerUser(String userId, String email) async {
+    await _channel
+        .invokeMethod('registerUser', {'userId': userId, 'email': email});
+    return;
+  }
+
+  static Future<void> inAppMessage(InAppType inAppType) async {
+    String type = inAppType.toString().split(".")[1];
+    await _channel.invokeMethod('inAppMessage', {'inAppType': type});
     return;
   }
 }

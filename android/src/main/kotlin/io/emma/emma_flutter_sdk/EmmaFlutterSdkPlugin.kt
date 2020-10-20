@@ -1,5 +1,6 @@
 package io.emma.emma_flutter_sdk
 
+import android.app.Activity
 import android.app.Application
 import android.content.Context
 import androidx.annotation.NonNull
@@ -12,11 +13,15 @@ import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 import io.flutter.plugin.common.PluginRegistry.Registrar
 import io.emma.android.EMMA
+import io.emma.android.model.EMMACampaign
 import io.emma.android.model.EMMAEventRequest
+import io.emma.android.model.EMMAInAppRequest
+import io.flutter.embedding.engine.plugins.activity.ActivityAware
+import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 import java.lang.Exception
 
 /** EmmaFlutterSdkPlugin */
-class EmmaFlutterSdkPlugin : FlutterPlugin, MethodCallHandler {
+class EmmaFlutterSdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
   /// The MethodChannel that will the communication between Flutter and native Android
   ///
   /// This local reference serves to register the plugin with the Flutter Engine anad unregister it
@@ -24,6 +29,8 @@ class EmmaFlutterSdkPlugin : FlutterPlugin, MethodCallHandler {
   private lateinit var channel: MethodChannel
 
   private lateinit var applicationContext: Context
+
+  private lateinit var activity: Activity
 
   override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
     applicationContext = flutterPluginBinding.applicationContext
@@ -66,8 +73,37 @@ class EmmaFlutterSdkPlugin : FlutterPlugin, MethodCallHandler {
         EMMA.getInstance().trackExtraUserInfo(userAttributes)
         result.success(null)
       }
+      "loginUser" -> {
+        var userId = call.argument<String>("userId") ?: return returnError(result, call.method, "userId")
+        var email = call.argument<String>("email") ?: ""
+        EMMA.getInstance().loginUser(userId, email)
+      }
+      "registerUser" -> {
+        var userId = call.argument<String>("userId") ?: return returnError(result, call.method, "userId")
+        var email = call.argument<String>("email") ?: ""
+        EMMA.getInstance().registerUser(userId, email)
+      }
+      "inAppMessage" -> {
+        var inAppRequestType = call.argument<String>("inAppType") ?: return returnError(result, call.method, "inAppType")
+
+        getInAppRequestTypeFromString(inAppRequestType).let {
+          var request = EMMAInAppRequest(it!!)
+          EMMA.getInstance().getInAppMessage(request)
+        }
+      }
       else -> {
         result.notImplemented()
+      }
+    }
+  }
+
+  fun getInAppRequestTypeFromString(type: String): EMMACampaign.Type? {
+    when(type) {
+      "startview" -> {
+        return EMMACampaign.Type.STARTVIEW
+      }
+      else -> {
+        return null
       }
     }
   }
@@ -78,5 +114,22 @@ class EmmaFlutterSdkPlugin : FlutterPlugin, MethodCallHandler {
 
   private fun returnError(@NonNull result: Result, methodName: String, @Nullable parameter: String? = null) {
     result.error("METHOD_ERROR", "Error in: $methodName", "Error in parameter: $parameter" ?: null)
+  }
+
+  override fun onDetachedFromActivity() {
+    TODO("Not yet implemented")
+  }
+
+  override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
+    TODO("Not yet implemented")
+  }
+
+  override fun onAttachedToActivity(binding: ActivityPluginBinding) {
+    activity = binding.activity;
+    EMMA.getInstance().setCurrentActivity(activity)
+  }
+
+  override fun onDetachedFromActivityForConfigChanges() {
+    TODO("Not yet implemented")
   }
 }
