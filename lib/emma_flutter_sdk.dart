@@ -42,6 +42,8 @@ class EmmaFlutterSdk {
   }
 
   /// Sends a login to EMMA
+  /// [userId] is your customer id for this user
+  /// [email] is a unique email of this user
   static Future<void> loginUser(String userId, String email) async {
     await _channel
         .invokeMethod('loginUser', {'userId': userId, 'email': email});
@@ -49,12 +51,16 @@ class EmmaFlutterSdk {
   }
 
   /// Sends register event to EMMA
+  /// [userId] is your customer id for this user
+  /// [email] is a unique email of this user
   static Future<void> registerUser(String userId, String email) async {
     await _channel
         .invokeMethod('registerUser', {'userId': userId, 'email': email});
     return;
   }
 
+  /// Checks for an InApp Message
+  /// You must pass [inAppType] of message you're expecting
   static Future<void> inAppMessage(InAppType inAppType) async {
     String type = inAppType.toString().split(".")[1];
     await _channel.invokeMethod('inAppMessage', {'inAppType': type});
