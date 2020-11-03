@@ -1,4 +1,4 @@
-# emma_flutter_sdk_example
+# emma_flutter_sample
 
 Demonstrates how to use the emma_flutter_sdk plugin.
 

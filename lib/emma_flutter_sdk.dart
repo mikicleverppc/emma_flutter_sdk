@@ -66,4 +66,11 @@ class EmmaFlutterSdk {
     await _channel.invokeMethod('inAppMessage', {'inAppType': type});
     return;
   }
+
+  /// Init EMMA Push system
+  /// You must define [notificationIcon] for Android OS
+  static Future<void> startPushSystem(String notificationIcon) async {
+    await _channel.invokeMethod('startPushSystem', {'notificationIcon': notificationIcon});
+    return;
+  }
 }

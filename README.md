@@ -10,6 +10,19 @@ For more information about EMMA sdk you can go to https://support.emma.io
 
 Package is published on https://pub.dev/packages/emma_flutter_sdk
 
+## Configuration
+
+You can check `/example` folder for a complete EMMA flutter sdk implementation. There is some divergences about native implementation listed here
+
+### Push System
+
+#### Android
+
+On Android you must include notification icon as a drawable.
+
+1. Open Runner in Android Studio
+2. Put your icon files inside `/app/res/drawable` folder into your Android Studio project
+
 ## Current Implementation
 
 - [x] Session Tracking (Start Session)
@@ -20,7 +33,11 @@ Package is published on https://pub.dev/packages/emma_flutter_sdk
   - [x] Register
   - [ ] Purchase
 - [ ] Powlink Support
-- [ ] Push System Support
+- [x] Push System Support
+  - [x] Receive Push
+  - [ ] Notification Color
+  - [ ] Mark push as opened
+  - [ ] Rich Push
 - [ ] Native Ads
 - [ ] InApp Messages
   - [x] Start View

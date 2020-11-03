@@ -1,24 +1,24 @@
 package io.emma.emma_flutter_sdk
 
 import android.app.Activity
-import android.app.Application
 import android.content.Context
+import android.content.res.Resources
+import androidx.annotation.DrawableRes
 import androidx.annotation.NonNull
 import androidx.annotation.Nullable
-
-import io.flutter.embedding.engine.plugins.FlutterPlugin
-import io.flutter.plugin.common.MethodCall
-import io.flutter.plugin.common.MethodChannel
-import io.flutter.plugin.common.MethodChannel.MethodCallHandler
-import io.flutter.plugin.common.MethodChannel.Result
-import io.flutter.plugin.common.PluginRegistry.Registrar
 import io.emma.android.EMMA
 import io.emma.android.model.EMMACampaign
 import io.emma.android.model.EMMAEventRequest
 import io.emma.android.model.EMMAInAppRequest
+import io.emma.android.model.EMMAPushOptions
+import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
-import java.lang.Exception
+import io.flutter.plugin.common.MethodCall
+import io.flutter.plugin.common.MethodChannel
+import io.flutter.plugin.common.MethodChannel.MethodCallHandler
+import io.flutter.plugin.common.MethodChannel.Result
+
 
 /** EmmaFlutterSdkPlugin */
 class EmmaFlutterSdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
@@ -32,8 +32,11 @@ class EmmaFlutterSdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
 
   private lateinit var activity: Activity
 
+  private lateinit var assets: FlutterPlugin.FlutterAssets
+
   override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
     applicationContext = flutterPluginBinding.applicationContext
+    assets = flutterPluginBinding.flutterAssets
     channel = MethodChannel(flutterPluginBinding.binaryMessenger, "emma_flutter_sdk")
     channel.setMethodCallHandler(this)
   }
@@ -44,9 +47,11 @@ class EmmaFlutterSdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         result.success(EMMA.getInstance().sdkVersion)
       }
       "startSession" -> {
-        var sessionKey = call.argument<String>("sessionKey") ?: return returnError(result, call.method, "sessionKey")
-        var debugEnabled = call.argument<Boolean>("debugEnabled") ?: return returnError(result, call.method, "debugEnabled")
-        
+        var sessionKey = call.argument<String>("sessionKey")
+                ?: return returnError(result, call.method, "sessionKey")
+        var debugEnabled = call.argument<Boolean>("debugEnabled")
+                ?: return returnError(result, call.method, "debugEnabled")
+
         val configuration = EMMA.Configuration.Builder(applicationContext)
                 .setSessionKey(sessionKey)
                 .setQueueTime(25)
@@ -58,7 +63,8 @@ class EmmaFlutterSdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         result.success(null);
       }
       "trackEvent" -> {
-        var eventToken = call.argument<String>("eventToken") ?: return returnError(result, call.method, "eventToken")
+        var eventToken = call.argument<String>("eventToken")
+                ?: return returnError(result, call.method, "eventToken")
         var eventRequest = EMMAEventRequest(eventToken)
 
         call.argument<HashMap<String, Any>>("eventAttributes").let { attributes ->
@@ -69,27 +75,46 @@ class EmmaFlutterSdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         result.success(null)
       }
       "trackExtraUserInfo" -> {
-        var userAttributes = call.argument<Map<String, String>>("extraUserInfo") ?: return returnError(result, call.method, "extraUserInfo")
+        var userAttributes = call.argument<Map<String, String>>("extraUserInfo")
+                ?: return returnError(result, call.method, "extraUserInfo")
         EMMA.getInstance().trackExtraUserInfo(userAttributes)
         result.success(null)
       }
       "loginUser" -> {
-        var userId = call.argument<String>("userId") ?: return returnError(result, call.method, "userId")
+        var userId = call.argument<String>("userId")
+                ?: return returnError(result, call.method, "userId")
         var email = call.argument<String>("email") ?: ""
         EMMA.getInstance().loginUser(userId, email)
       }
       "registerUser" -> {
-        var userId = call.argument<String>("userId") ?: return returnError(result, call.method, "userId")
+        var userId = call.argument<String>("userId")
+                ?: return returnError(result, call.method, "userId")
         var email = call.argument<String>("email") ?: ""
         EMMA.getInstance().registerUser(userId, email)
       }
       "inAppMessage" -> {
-        var inAppRequestType = call.argument<String>("inAppType") ?: return returnError(result, call.method, "inAppType")
+        var inAppRequestType = call.argument<String>("inAppType")
+                ?: return returnError(result, call.method, "inAppType")
 
         getInAppRequestTypeFromString(inAppRequestType).let {
           var request = EMMAInAppRequest(it!!)
           EMMA.getInstance().getInAppMessage(request)
         }
+
+      }
+      "startPushSystem" -> {
+
+        var pushIcon = getNotificationIcon(applicationContext, "notification_icon")
+
+        if (pushIcon == 0) {
+          return returnError(result, call.method, "pushIcon")
+        }
+
+        val pushOpt = EMMAPushOptions.Builder(activity::class.java, pushIcon)
+                .setNotificationChannelName("Mi custom channel")
+                .build()
+
+        EMMA.getInstance().startPushSystem(pushOpt)
       }
       else -> {
         result.notImplemented()
@@ -131,5 +156,11 @@ class EmmaFlutterSdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
 
   override fun onDetachedFromActivityForConfigChanges() {
     TODO("Not yet implemented")
+  }
+
+  @DrawableRes
+  private fun getNotificationIcon(context: Context, imageName: String): Int {
+    val res: Resources = context.resources
+    return res.getIdentifier(imageName, "drawable", context.packageName)
   }
 }

@@ -20,20 +20,22 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     initPlatformState();
-    initEMMA();
+    initEMMA()
+        .then((value) => initEMMAPush())
+        .then((value) => trackUserProfile());
   }
 
   Future<void> initEMMA() async {
-    try {
-      await EmmaFlutterSdk.startSession('emmaflutter2BMRb2NQ0',
-          debugEnabled: true);
+    return await EmmaFlutterSdk.startSession('emmaflutter2BMRb2NQ0',
+        debugEnabled: true);
+  }
 
-      await EmmaFlutterSdk.trackExtraUserInfo({'TEST_TAG': 'TEST VALUE'});
-    } on PlatformException catch (err) {
-      print("Error starting EMMA session: " + err.message);
-    }
+  Future<void> initEMMAPush() async {
+    return await EmmaFlutterSdk.startPushSystem('notification_icon');
+  }
 
-    setState(() {});
+  Future<void> trackUserProfile() async {
+    return await EmmaFlutterSdk.trackExtraUserInfo({'TEST_TAG': 'TEST VALUE'});
   }
 
   // Platform messages are asynchronous, so we initialize in an async method.

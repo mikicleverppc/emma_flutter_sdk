@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.4
+
+* Fix missing results on iOS plugin
+* Start Push System
+
 ## 1.0.3
 
 * Login default event

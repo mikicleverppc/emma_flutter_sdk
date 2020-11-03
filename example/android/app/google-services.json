@@ -1,0 +1,85 @@
+{
+  "project_info": {
+    "project_number": "185037509724",
+    "firebase_url": "https://prueba-emma-11-2017.firebaseio.com",
+    "project_id": "prueba-emma-11-2017",
+    "storage_bucket": "prueba-emma-11-2017.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:185037509724:android:2f6f6039740bcaca4c4299",
+        "android_client_info": {
+          "package_name": "io.emma.emma_flutter_sample"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "185037509724-6q8uhn6unnk2u149bl95php9dns99cgf.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDluJ03_P72Eq2TgGhBB0dv73Sw6a23D_E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "185037509724-6q8uhn6unnk2u149bl95php9dns99cgf.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "185037509724-qpqbsdgp611sqegk9bgi2via197dg05p.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "io.emma.emma-swift",
+                "app_store_id": "1260951447"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:185037509724:android:4b4335f7426616af",
+        "android_client_info": {
+          "package_name": "io.emma.emmaandroid"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "185037509724-6q8uhn6unnk2u149bl95php9dns99cgf.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDluJ03_P72Eq2TgGhBB0dv73Sw6a23D_E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "185037509724-6q8uhn6unnk2u149bl95php9dns99cgf.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "185037509724-qpqbsdgp611sqegk9bgi2via197dg05p.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "io.emma.emma-swift",
+                "app_store_id": "1260951447"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
