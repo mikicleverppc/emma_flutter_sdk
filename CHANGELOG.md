@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.5
+
+* Send push open
+* Rich push support
+
 ## 1.0.4
 
 * Fix missing results on iOS plugin

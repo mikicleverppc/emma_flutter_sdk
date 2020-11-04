@@ -10,7 +10,7 @@ extension FlutterAppDelegate : EMMAPushDelegate {
 }
 
 /** This implementation replaces push methods on AppDelegate  */
-class EMMAFlutterPushDelegate {
+class EMMAFlutterAppDelegate {
     
     let appDelegate = UIApplication.shared.delegate
     
@@ -57,28 +57,28 @@ class EMMAFlutterPushDelegate {
         
         var swizzles = Array<(Selector, Selector)>()
         
-        swizzles.append((#selector(FlutterAppDelegate.application(_:didRegisterForRemoteNotificationsWithDeviceToken:)),
-                         #selector(EMMAFlutterPushDelegate.self.application(_:didRegisterForRemoteNotificationsWithDeviceToken:))))
-        
-        
         swizzles.append((#selector(FlutterAppDelegate.application(_:didRegister:)),
-                         #selector(EMMAFlutterPushDelegate.self.application(_:didRegister:))))
+                         #selector(EMMAFlutterAppDelegate.self.application(_:didRegister:))))
         
         swizzles.append((#selector(FlutterAppDelegate.application(_:didFailToRegisterForRemoteNotificationsWithError:)),
-                         #selector(EMMAFlutterPushDelegate.self.application(_:didFailToRegisterForRemoteNotificationsWithError:))))
+                         #selector(EMMAFlutterAppDelegate.self.application(_:didFailToRegisterForRemoteNotificationsWithError:))))
         
         swizzles.append((#selector(UNUserNotificationCenterDelegate.userNotificationCenter(_:willPresent:withCompletionHandler:)),
-                         #selector(EMMAFlutterPushDelegate.self.userNotificationCenter(_:willPresent:withCompletionHandler:))))
+                         #selector(EMMAFlutterAppDelegate.self.userNotificationCenter(_:willPresent:withCompletionHandler:))))
         
         swizzles.append((#selector(UNUserNotificationCenterDelegate.userNotificationCenter(_:didReceive:withCompletionHandler:)),
-                         #selector(EMMAFlutterPushDelegate.self.userNotificationCenter(_:didReceive:withCompletionHandler:))))
+                         #selector(EMMAFlutterAppDelegate.self.userNotificationCenter(_:didReceive:withCompletionHandler:))))
+        
+        swizzles.append((#selector(FlutterAppDelegate.application(_:didRegisterForRemoteNotificationsWithDeviceToken:)),
+                         #selector(EMMAFlutterAppDelegate.self.application(_:didRegisterForRemoteNotificationsWithDeviceToken:))))
+        
         
         for s in swizzles {
             
             let originalSelector = s.0
             let swizzledSelector = s.1
             
-            guard let swizzledMethod = class_getInstanceMethod(EMMAFlutterPushDelegate.self, swizzledSelector) else {
+            guard let swizzledMethod = class_getInstanceMethod(EMMAFlutterAppDelegate.self, swizzledSelector) else {
                 return
             }
             
@@ -94,19 +94,13 @@ class EMMAFlutterPushDelegate {
     
 }
 
-extension UIApplicationDelegate {
-    // MARK: - EMMA Push Delegate
-    
-    
-}
-
 public class SwiftEmmaFlutterSdkPlugin: NSObject, FlutterPlugin {
     
     public static func register(with registrar: FlutterPluginRegistrar) {
         let channel = FlutterMethodChannel(name: "emma_flutter_sdk", binaryMessenger: registrar.messenger())
         let instance = SwiftEmmaFlutterSdkPlugin()
-        instance.setPushDelegates()
         registrar.addMethodCallDelegate(instance, channel: channel)
+        registrar.addApplicationDelegate(instance)
     }
     
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
@@ -249,8 +243,7 @@ public class SwiftEmmaFlutterSdkPlugin: NSObject, FlutterPlugin {
             result(nil)
             break
         case "startPushSystem":
-            //setPushDelegates(startPush: true)
-            //EMMA.startPushSystem()
+            setPushDelegates()
             result(nil)
             break
         default:
@@ -261,7 +254,7 @@ public class SwiftEmmaFlutterSdkPlugin: NSObject, FlutterPlugin {
     
     func setPushDelegates() {
         if let applicationDelegate = UIApplication.shared.delegate as? FlutterAppDelegate {
-            let pushDelegate = EMMAFlutterPushDelegate()
+            let pushDelegate = EMMAFlutterAppDelegate()
             if #available(iOS 10.0, *) {
                 pushDelegate.swizzlePushMethods()
             }
@@ -279,5 +272,15 @@ public class SwiftEmmaFlutterSdkPlugin: NSObject, FlutterPlugin {
         default:
             return nil
         }
+    }
+    
+    public func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [AnyHashable : Any] = [:]) -> Bool {
+        guard let notification = launchOptions[UIApplication.LaunchOptionsKey.remoteNotification] else {
+            return true
+        }
+        setPushDelegates()
+        EMMA.handlePush(notification as? [AnyHashable : Any])
+        
+        return true
     }
 }
