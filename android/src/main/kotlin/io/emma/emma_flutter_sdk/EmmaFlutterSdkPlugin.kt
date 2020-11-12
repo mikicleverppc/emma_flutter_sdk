@@ -241,6 +241,7 @@ class EmmaFlutterSdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
   }
 
   private fun startPushSystem(@NonNull call: MethodCall, @NonNull result: Result) {
+
     val notificationIcon = call.argument<String>("notificationIcon")
             ?: return returnError(result, call.method, "notificationIcon")
     val pushIcon = Utils.getNotificationIcon(applicationContext, notificationIcon)
