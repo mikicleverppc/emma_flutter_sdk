@@ -38,7 +38,7 @@ On Android you must include notification icon as a drawable.
   - [ ] Notification Color
   - [x] Mark push as opened
   - [x] Rich Push
-- [ ] Native Ads
+- [x] Native Ads
 - [ ] InApp Messages
   - [x] Start View
   - [ ] Banner
