@@ -1,0 +1,1 @@
+enum InAppType { startview, nativeAd }

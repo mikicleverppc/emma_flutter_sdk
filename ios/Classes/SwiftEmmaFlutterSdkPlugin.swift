@@ -96,11 +96,17 @@ class EMMAFlutterAppDelegate {
 
 public class SwiftEmmaFlutterSdkPlugin: NSObject, FlutterPlugin {
     
+    private let channel: FlutterMethodChannel
+    
     public static func register(with registrar: FlutterPluginRegistrar) {
         let channel = FlutterMethodChannel(name: "emma_flutter_sdk", binaryMessenger: registrar.messenger())
-        let instance = SwiftEmmaFlutterSdkPlugin()
+        let instance = SwiftEmmaFlutterSdkPlugin(channel)
         registrar.addMethodCallDelegate(instance, channel: channel)
         registrar.addApplicationDelegate(instance)
+    }
+    
+    public init(_ channel: FlutterMethodChannel) {
+        self.channel = channel
     }
     
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
@@ -109,138 +115,22 @@ public class SwiftEmmaFlutterSdkPlugin: NSObject, FlutterPlugin {
             result(EMMA.getSDKVersion())
             break
         case "startSession":
-            guard let args = call.arguments as? Dictionary<String, AnyObject> else {
-                result(FlutterError.init(code: "BAD_ARGS",
-                                         message: "Can't find args",
-                                         details: nil))
-                return
-            }
-            
-            guard let sessionKey = args["sessionKey"] as? String else {
-                result(FlutterError.init(code: "BAD_ARGS",
-                                         message: "Can't find Session Key",
-                                         details: nil))
-                return
-            }
-            
-            guard let debugEnabled = args["debugEnabled"] as? Bool else {
-                result(FlutterError.init(code: "BAD_ARGS",
-                                         message: "Debug Enabled is not boolean",
-                                         details: nil))
-                return
-            }
-            
-            let configuration = EMMAConfiguration()
-            configuration.debugEnabled = debugEnabled
-            configuration.sessionKey = sessionKey
-            EMMA.startSession(with: configuration)
-            
-            result(nil)
+            startSession(call, result)
             break
         case "trackEvent":
-            guard let args = call.arguments as? Dictionary<String, AnyObject> else {
-                result(FlutterError.init(code: "BAD_ARGS",
-                                         message: "Can't find args",
-                                         details: nil))
-                return
-            }
-            
-            guard let eventToken = args["eventToken"] as? String else {
-                result(FlutterError.init(code: "BAD_ARGS",
-                                         message: "Can't find Event Token",
-                                         details: nil))
-                return
-            }
-            
-            let eventRequest = EMMAEventRequest(token: eventToken)
-            if let eventAttributes = args["eventAttributes"] as? Dictionary<String, AnyObject>  {
-                eventRequest?.attributes = eventAttributes
-            }
-            EMMA.trackEvent(eventRequest)
-            result(nil)
+            trackEvent(call, result)
             break
         case "trackExtraUserInfo":
-            guard let args = call.arguments as? Dictionary<String, AnyObject> else {
-                result(FlutterError.init(code: "BAD_ARGS",
-                                         message: "Can't find args",
-                                         details: nil))
-                return
-            }
-            guard let userAttributes = args["extraUserInfo"] as? Dictionary<String, String> else {
-                result(FlutterError.init(code: "BAD_ARGS",
-                                         message: "Can't user arguments",
-                                         details: nil))
-                return
-            }
-            EMMA.trackExtraUserInfo(userAttributes)
-            result(nil)
+            trackExtraUserInfo(call, result)
             break
         case "loginUser":
-            guard let args = call.arguments as? Dictionary<String, AnyObject> else {
-                result(FlutterError.init(code: "BAD_ARGS",
-                                         message: "Can't find args",
-                                         details: nil))
-                return
-            }
-            
-            guard let userId = args["userId"] as? String else {
-                result(FlutterError.init(code: "BAD_ARGS",
-                                         message: "Can't get userId",
-                                         details: nil))
-                return
-            }
-            
-            let email = args["email"] as? String ?? ""
-            
-            EMMA.loginUser(userId, forMail: email)
-            result(nil)
+            loginUser(call, result)
             break
         case "registerUser":
-            guard let args = call.arguments as? Dictionary<String, AnyObject> else {
-                result(FlutterError.init(code: "BAD_ARGS",
-                                         message: "Can't find args",
-                                         details: nil))
-                return
-            }
-            
-            guard let userId = args["userId"] as? String else {
-                result(FlutterError.init(code: "BAD_ARGS",
-                                         message: "Can't get userId",
-                                         details: nil))
-                return
-            }
-            
-            let email = args["email"] as? String ?? ""
-            
-            EMMA.registerUser(userId, forMail: email)
-            result(nil)
+            registerUser(call, result)
             break
         case "inAppMessage":
-            
-            guard let args = call.arguments as? Dictionary<String, AnyObject> else {
-                result(FlutterError.init(code: "BAD_ARGS",
-                                         message: "Can't find args",
-                                         details: nil))
-                return
-            }
-            
-            guard let inAppType = args["inAppType"] as? String else {
-                result(FlutterError.init(code: "BAD_ARGS",
-                                         message: "Can't get inAppType",
-                                         details: nil))
-                return
-            }
-            
-            guard let requestType = getInAppTypeFromString(inAppType: inAppType) else {
-                result(FlutterError.init(code: "BAD_INAPP_TYPE",
-                                         message: "Unknown inapp type",
-                                         details: nil))
-                return
-            }
-            
-            let request = EMMAInAppRequest(type: requestType)
-            EMMA.inAppMessage(request)
-            result(nil)
+            inappMessage(call, result)
             break
         case "startPushSystem":
             setPushDelegates()
@@ -250,6 +140,164 @@ public class SwiftEmmaFlutterSdkPlugin: NSObject, FlutterPlugin {
             result(FlutterMethodNotImplemented)
             break
         }
+    }
+    
+    func startSession(_ call: FlutterMethodCall, _ result: @escaping FlutterResult) {
+        guard let args = call.arguments as? Dictionary<String, AnyObject> else {
+            result(FlutterError.init(code: "BAD_ARGS",
+                                     message: "Can't find args",
+                                     details: nil))
+            return
+        }
+        
+        guard let sessionKey = args["sessionKey"] as? String else {
+            result(FlutterError.init(code: "BAD_ARGS",
+                                     message: "Can't find Session Key",
+                                     details: nil))
+            return
+        }
+        
+        guard let debugEnabled = args["debugEnabled"] as? Bool else {
+            result(FlutterError.init(code: "BAD_ARGS",
+                                     message: "Debug Enabled is not boolean",
+                                     details: nil))
+            return
+        }
+        
+        let configuration = EMMAConfiguration()
+        configuration.debugEnabled = debugEnabled
+        configuration.sessionKey = sessionKey
+        EMMA.startSession(with: configuration)
+        
+        result(nil)
+    }
+    
+    func trackEvent(_ call: FlutterMethodCall, _ result: @escaping FlutterResult) {
+        guard let args = call.arguments as? Dictionary<String, AnyObject> else {
+            result(FlutterError.init(code: "BAD_ARGS",
+                                     message: "Can't find args",
+                                     details: nil))
+            return
+        }
+        
+        guard let eventToken = args["eventToken"] as? String else {
+            result(FlutterError.init(code: "BAD_ARGS",
+                                     message: "Can't find Event Token",
+                                     details: nil))
+            return
+        }
+        
+        let eventRequest = EMMAEventRequest(token: eventToken)
+        if let eventAttributes = args["eventAttributes"] as? Dictionary<String, AnyObject>  {
+            eventRequest?.attributes = eventAttributes
+        }
+        EMMA.trackEvent(eventRequest)
+        result(nil)
+    }
+    
+    func trackExtraUserInfo(_ call: FlutterMethodCall, _ result: @escaping FlutterResult) {
+        guard let args = call.arguments as? Dictionary<String, AnyObject> else {
+            result(FlutterError.init(code: "BAD_ARGS",
+                                     message: "Can't find args",
+                                     details: nil))
+            return
+        }
+        guard let userAttributes = args["extraUserInfo"] as? Dictionary<String, String> else {
+            result(FlutterError.init(code: "BAD_ARGS",
+                                     message: "Can't user arguments",
+                                     details: nil))
+            return
+        }
+        EMMA.trackExtraUserInfo(userAttributes)
+        result(nil)
+    }
+    
+    func loginUser(_ call: FlutterMethodCall, _ result: @escaping FlutterResult) {
+        guard let args = call.arguments as? Dictionary<String, AnyObject> else {
+            result(FlutterError.init(code: "BAD_ARGS",
+                                     message: "Can't find args",
+                                     details: nil))
+            return
+        }
+        
+        guard let userId = args["userId"] as? String else {
+            result(FlutterError.init(code: "BAD_ARGS",
+                                     message: "Can't get userId",
+                                     details: nil))
+            return
+        }
+        
+        let email = args["email"] as? String ?? ""
+        
+        EMMA.loginUser(userId, forMail: email)
+        result(nil)
+    }
+    
+    func registerUser(_ call: FlutterMethodCall, _ result: @escaping FlutterResult) {
+        guard let args = call.arguments as? Dictionary<String, AnyObject> else {
+            result(FlutterError.init(code: "BAD_ARGS",
+                                     message: "Can't find args",
+                                     details: nil))
+            return
+        }
+        
+        guard let userId = args["userId"] as? String else {
+            result(FlutterError.init(code: "BAD_ARGS",
+                                     message: "Can't get userId",
+                                     details: nil))
+            return
+        }
+        
+        let email = args["email"] as? String ?? ""
+        
+        EMMA.registerUser(userId, forMail: email)
+        result(nil)
+    }
+    
+    func inappMessage(_ call: FlutterMethodCall, _ result: @escaping FlutterResult) {
+        guard let args = call.arguments as? Dictionary<String, AnyObject> else {
+            result(FlutterError.init(code: "BAD_ARGS",
+                                     message: "Can't find args",
+                                     details: nil))
+            return
+        }
+        
+        guard let inAppType = args["inAppType"] as? String else {
+            result(FlutterError.init(code: "BAD_ARGS",
+                                     message: "Can't get inAppType",
+                                     details: nil))
+            return
+        }
+        
+        guard let requestType = getInAppTypeFromString(inAppType: inAppType) else {
+            result(FlutterError.init(code: "BAD_INAPP_TYPE",
+                                     message: "Unknown inapp type",
+                                     details: nil))
+            return
+        }
+        
+        if (requestType == InAppType.NativeAd) {
+            let request = EMMANativeAdRequest()
+            
+            guard let templateId = args["templateId"] as? String else {
+                result(FlutterError.init(code: "BAD_TEMPLATE_ID",
+                                         message: "Unknown template id in request",
+                                         details: nil))
+                return
+            }
+            
+            let batch = args["batch"] as? Bool ?? false
+            
+            request.templateId = templateId
+            request.isBatch = batch
+            
+            EMMA.inAppMessage(request, with: self)
+        } else {
+            let request = EMMAInAppRequest(type: requestType)
+            EMMA.inAppMessage(request)
+        }
+        
+        result(nil)
     }
     
     func setPushDelegates() {
@@ -269,6 +317,8 @@ public class SwiftEmmaFlutterSdkPlugin: NSObject, FlutterPlugin {
         switch inAppType {
         case "startview":
             return .Startview
+        case "nativeAd":
+            return .NativeAd
         default:
             return nil
         }
@@ -282,5 +332,36 @@ public class SwiftEmmaFlutterSdkPlugin: NSObject, FlutterPlugin {
         EMMA.handlePush(notification as? [AnyHashable : Any])
         
         return true
+    }
+}
+
+extension SwiftEmmaFlutterSdkPlugin: EMMAInAppMessageDelegate {
+    public func onReceiveNativeAds(_ nativeAds: [EMMANativeAd]) {
+        let convertedNativeAd = nativeAds.map({(nativeAd) -> [String: Any?] in
+            return EmmaSerializer.nativeAdToDictionary(nativeAd)
+        })
+        DispatchQueue.main.async {
+            self.channel.invokeMethod("Emma#onReceiveNativeAds", arguments: convertedNativeAd)
+        }
+    }
+    
+    public func onShown(_ campaign: EMMACampaign) {
+        // Not implemented
+    }
+    
+    public func onHide(_ campaign: EMMACampaign) {
+        // Not implemented
+    }
+    
+    public func onClose(_ campaign: EMMACampaign) {
+        // Not implemented
+    }
+
+    public func onReceived(_ nativeAd: EMMANativeAd) {
+        onReceiveNativeAds([nativeAd])
+    }
+    
+    public func onBatchNativeAdReceived(_ nativeAds: [EMMANativeAd]) {
+        onReceiveNativeAds(nativeAds)
     }
 }

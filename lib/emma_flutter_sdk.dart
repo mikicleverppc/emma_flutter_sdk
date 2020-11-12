@@ -1,14 +1,44 @@
 import 'dart:async';
-
 import 'package:flutter/services.dart';
+import 'src/inapp_message_request.dart';
+import 'src/native_ad.dart';
 
-enum InAppType { startview }
+export 'src/defines.dart';
+export 'src/native_ad.dart';
+export 'src/inapp_message_request.dart';
+
+
+typedef void ReceivedNativeAdsHandler(List<EmmaNativeAd> nativeAds);
 
 class EmmaFlutterSdk {
-  static const MethodChannel _channel = const MethodChannel('emma_flutter_sdk');
+  static EmmaFlutterSdk shared = new EmmaFlutterSdk();
+
+  // method channels
+  MethodChannel _channel = const MethodChannel('emma_flutter_sdk');
+
+  // event handlers
+  ReceivedNativeAdsHandler _onReceivedNativeAds;
+
+  EmmaFlutterSdk() {
+    this._channel.setMethodCallHandler(_manageCallHandler);
+  }
+
+  Future<Null> _manageCallHandler(MethodCall call) async {
+    switch (call.method) {
+      case "Emma#onReceiveNativeAds":
+        List<dynamic> nativeAdsMap = call.arguments;
+        this._onReceivedNativeAds(nativeAdsMap.map((nativeAdMap) =>
+              new EmmaNativeAd.fromMap(nativeAdMap.cast<String, dynamic>())).toList());
+        break;
+    }
+    return null;
+  }
+
+  void setReceivedNativeAdsHandler(ReceivedNativeAdsHandler handler) =>
+      _onReceivedNativeAds = handler;
 
   /// Retrieves current EMMA SDK Version
-  static Future<String> getEMMAVersion() async {
+  Future<String> getEMMAVersion() async {
     final String version = await _channel.invokeMethod('getEMMAVersion');
     return version;
   }
@@ -17,7 +47,7 @@ class EmmaFlutterSdk {
   ///
   /// You can use [debugEnabled] to enable logging on your device.
   /// This log is only visible on device consoles
-  static Future<void> startSession(String sessionKey,
+  Future<void> startSession(String sessionKey,
       {bool debugEnabled = false}) async {
     await _channel.invokeMethod('startSession',
         {'sessionKey': sessionKey, 'debugEnabled': debugEnabled});
@@ -26,7 +56,7 @@ class EmmaFlutterSdk {
 
   /// Send an event to emma identified by [eventToken].
   /// You can also assign some attributtes to this event with [eventArguments]
-  static Future<void> trackEvent(String eventToken,
+  Future<void> trackEvent(String eventToken,
       {Map<String, String> eventArguments}) async {
     await _channel.invokeMethod('trackEvent',
         {'eventToken': eventToken, 'eventArguments': eventArguments});
@@ -34,7 +64,7 @@ class EmmaFlutterSdk {
   }
 
   /// You can complete user profile with extra parameters
-  static Future<void> trackExtraUserInfo(
+  Future<void> trackExtraUserInfo(
       Map<String, String> extraUserInfo) async {
     await _channel
         .invokeMethod('trackExtraUserInfo', {'extraUserInfo': extraUserInfo});
@@ -44,7 +74,7 @@ class EmmaFlutterSdk {
   /// Sends a login to EMMA
   /// [userId] is your customer id for this user
   /// [email] is a unique email of this user
-  static Future<void> loginUser(String userId, String email) async {
+  Future<void> loginUser(String userId, String email) async {
     await _channel
         .invokeMethod('loginUser', {'userId': userId, 'email': email});
     return;
@@ -53,24 +83,27 @@ class EmmaFlutterSdk {
   /// Sends register event to EMMA
   /// [userId] is your customer id for this user
   /// [email] is a unique email of this user
-  static Future<void> registerUser(String userId, String email) async {
+  Future<void> registerUser(String userId, String email) async {
     await _channel
         .invokeMethod('registerUser', {'userId': userId, 'email': email});
     return;
   }
 
   /// Checks for an InApp Message
-  /// You must pass [inAppType] of message you're expecting
-  static Future<void> inAppMessage(InAppType inAppType) async {
-    String type = inAppType.toString().split(".")[1];
-    await _channel.invokeMethod('inAppMessage', {'inAppType': type});
+  /// You must pass [EmmaInAppMessageRequest] of message you're expecting
+  Future<void> inAppMessage(EmmaInAppMessageRequest request) async {
+    await _channel.invokeMethod('inAppMessage', request.toMap());
     return;
   }
 
   /// Init EMMA Push system
   /// You must define [notificationIcon] for Android OS
-  static Future<void> startPushSystem(String notificationIcon) async {
-    await _channel.invokeMethod('startPushSystem', {'notificationIcon': notificationIcon});
+  /// Optional param [notificationChannel] to define notification channel name for Android OS. Default app name.
+  /// Optional param [notificationChannelId] to subscribe an existent channel.
+  Future<void> startPushSystem(String notificationIcon,
+      {String notificationChannel = null, String notificationChannelId = null} ) async {
+    await _channel.invokeMethod('startPushSystem', {'notificationIcon': notificationIcon,
+      'notificationChannel': notificationChannel, 'notificationChannelId': notificationChannelId});
     return;
   }
 }

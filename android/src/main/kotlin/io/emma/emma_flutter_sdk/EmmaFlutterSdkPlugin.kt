@@ -2,15 +2,13 @@ package io.emma.emma_flutter_sdk
 
 import android.app.Activity
 import android.content.Context
-import android.content.res.Resources
-import androidx.annotation.DrawableRes
 import androidx.annotation.NonNull
 import androidx.annotation.Nullable
 import io.emma.android.EMMA
-import io.emma.android.model.EMMACampaign
-import io.emma.android.model.EMMAEventRequest
-import io.emma.android.model.EMMAInAppRequest
-import io.emma.android.model.EMMAPushOptions
+import io.emma.android.interfaces.EMMABatchNativeAdInterface
+import io.emma.android.interfaces.EMMAInAppMessageInterface
+import io.emma.android.interfaces.EMMANativeAdInterface
+import io.emma.android.utils.EMMALog
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
@@ -18,7 +16,9 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
-
+import io.emma.android.model.*
+import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
 
 /** EmmaFlutterSdkPlugin */
 class EmmaFlutterSdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
@@ -47,77 +47,29 @@ class EmmaFlutterSdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         result.success(EMMA.getInstance().sdkVersion)
       }
       "startSession" -> {
-        var sessionKey = call.argument<String>("sessionKey")
-                ?: return returnError(result, call.method, "sessionKey")
-        var debugEnabled = call.argument<Boolean>("debugEnabled")
-                ?: return returnError(result, call.method, "debugEnabled")
-
-        val configuration = EMMA.Configuration.Builder(applicationContext)
-                .setSessionKey(sessionKey)
-                .setQueueTime(25)
-                .setDebugActive(debugEnabled)
-                .build()
-
-        EMMA.getInstance().startSession(configuration)
-
-        result.success(null);
+        startSession(call, result)
       }
       "trackEvent" -> {
-        var eventToken = call.argument<String>("eventToken")
-                ?: return returnError(result, call.method, "eventToken")
-        var eventRequest = EMMAEventRequest(eventToken)
-
-        call.argument<HashMap<String, Any>>("eventAttributes").let { attributes ->
-          eventRequest.attributes = attributes
-        }
-
-        EMMA.getInstance().trackEvent(eventRequest)
-        result.success(null)
+        trackEvent(call, result)
       }
       "trackExtraUserInfo" -> {
-        var userAttributes = call.argument<Map<String, String>>("extraUserInfo")
-                ?: return returnError(result, call.method, "extraUserInfo")
-        EMMA.getInstance().trackExtraUserInfo(userAttributes)
-        result.success(null)
+        trackExtraUserInfo(call, result)
       }
       "loginUser" -> {
-        var userId = call.argument<String>("userId")
-                ?: return returnError(result, call.method, "userId")
-        var email = call.argument<String>("email") ?: ""
-        EMMA.getInstance().loginUser(userId, email)
+        loginUser(call, result)
       }
       "registerUser" -> {
-        var userId = call.argument<String>("userId")
-                ?: return returnError(result, call.method, "userId")
-        var email = call.argument<String>("email") ?: ""
-        EMMA.getInstance().registerUser(userId, email)
+        registerUser(call, result)
       }
       "inAppMessage" -> {
-        var inAppRequestType = call.argument<String>("inAppType")
-                ?: return returnError(result, call.method, "inAppType")
-
-        getInAppRequestTypeFromString(inAppRequestType).let {
-          var request = EMMAInAppRequest(it!!)
-          EMMA.getInstance().getInAppMessage(request)
-        }
-
+        inappMessage(call, result)
       }
       "startPushSystem" -> {
-
-        var pushIcon = getNotificationIcon(applicationContext, "notification_icon")
-
-        if (pushIcon == 0) {
-          return returnError(result, call.method, "pushIcon")
-        }
-
-        val pushOpt = EMMAPushOptions.Builder(activity::class.java, pushIcon)
-                .setNotificationChannelName("Mi custom channel")
-                .build()
-
-        EMMA.getInstance().startPushSystem(pushOpt)
+        startPushSystem(call, result)
       }
       else -> {
-        result.notImplemented()
+        EMMALog.w("Method ${call.method} not implemented")
+        Utils.runOnMainThread(Runnable { result.notImplemented() })
       }
     }
   }
@@ -126,6 +78,9 @@ class EmmaFlutterSdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     when(type) {
       "startview" -> {
         return EMMACampaign.Type.STARTVIEW
+      }
+      "nativeAd" -> {
+        return EMMACampaign.Type.NATIVEAD
       }
       else -> {
         return null
@@ -142,11 +97,11 @@ class EmmaFlutterSdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
   }
 
   override fun onDetachedFromActivity() {
-    TODO("Not yet implemented")
+    // Not implemented
   }
 
   override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
-    TODO("Not yet implemented")
+    // Not implemented
   }
 
   override fun onAttachedToActivity(binding: ActivityPluginBinding) {
@@ -155,12 +110,169 @@ class EmmaFlutterSdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
   }
 
   override fun onDetachedFromActivityForConfigChanges() {
-    TODO("Not yet implemented")
+    // Not implemented
   }
 
-  @DrawableRes
-  private fun getNotificationIcon(context: Context, imageName: String): Int {
-    val res: Resources = context.resources
-    return res.getIdentifier(imageName, "drawable", context.packageName)
+  private fun startSession(@NonNull call: MethodCall, @NonNull result: Result) {
+    val sessionKey = call.argument<String>("sessionKey")
+            ?: return returnError(result, call.method, "sessionKey")
+    val debugEnabled = call.argument<Boolean>("debugEnabled")
+            ?: return returnError(result, call.method, "debugEnabled")
+
+    val configuration = EMMA.Configuration.Builder(applicationContext)
+            .setSessionKey(sessionKey)
+            .setQueueTime(25)
+            .setDebugActive(debugEnabled)
+            .build()
+
+    EMMA.getInstance().startSession(configuration)
+    result.success(null);
+  }
+
+  private fun trackEvent(@NonNull call: MethodCall, @NonNull result: Result) {
+    val eventToken = call.argument<String>("eventToken")
+            ?: return returnError(result, call.method, "eventToken")
+    val eventRequest = EMMAEventRequest(eventToken)
+
+    call.argument<HashMap<String, Any>>("eventAttributes").let { attributes ->
+      eventRequest.attributes = attributes
+    }
+
+    EMMA.getInstance().trackEvent(eventRequest)
+    result.success(null)
+  }
+
+  private fun trackExtraUserInfo(@NonNull call: MethodCall, @NonNull result: Result) {
+    val userAttributes = call.argument<Map<String, String>>("extraUserInfo")
+            ?: return returnError(result, call.method, "extraUserInfo")
+    EMMA.getInstance().trackExtraUserInfo(userAttributes)
+    result.success(null)
+  }
+
+  private fun loginUser(@NonNull call: MethodCall, @NonNull result: Result) {
+    val userId = call.argument<String>("userId")
+            ?: return returnError(result, call.method, "userId")
+    val email = call.argument<String>("email") ?: ""
+    EMMA.getInstance().loginUser(userId, email)
+    result.success(null)
+  }
+
+  private fun registerUser(@NonNull call: MethodCall, @NonNull result: Result) {
+    val userId = call.argument<String>("userId")
+            ?: return returnError(result, call.method, "userId")
+    val email = call.argument<String>("email") ?: ""
+    EMMA.getInstance().registerUser(userId, email)
+    result.success(null)
+  }
+
+  private fun inappMessage(@NonNull call: MethodCall, @NonNull result: Result) {
+    val inAppRequestType = call.argument<String>("inAppType")
+            ?: return returnError(result, call.method, "inAppType")
+
+    val inappType = getInAppRequestTypeFromString(inAppRequestType)
+    if (null == inappType) {
+      EMMALog.w("Invalid inapp type $inAppRequestType. Skip request.")
+      result.success(null)
+      return
+    }
+
+    if (EMMACampaign.Type.NATIVEAD == inappType) {
+      inappMessageNativeAd(call, result)
+    } else {
+      val request = EMMAInAppRequest(inappType)
+      EMMA.getInstance().getInAppMessage(request)
+      result.success(null)
+    }
+  }
+
+  private fun inappMessageNativeAd(@NonNull call: MethodCall, @NonNull result: Result) {
+    val request = EMMANativeAdRequest()
+    request.templateId = call.argument<String>("templateId")?:
+            return returnError(result, call.method, "templateId")
+    request.isBatch = call.argument<Boolean>("batch")
+            ?: false
+
+    val listener: EMMAInAppMessageInterface
+    if (request.isBatch) {
+      listener = object : EMMABatchNativeAdInterface {
+        override fun onShown(campaign: EMMACampaign) {
+          // Not implemented
+        }
+
+        override fun onHide(campaign: EMMACampaign) {
+          // Not implemented
+        }
+
+        override fun onClose(campaign: EMMACampaign) {
+          // Not implemented
+        }
+
+        override fun onBatchReceived(nativeAds: List<EMMANativeAd>) {
+          onReceiveNativeAds(nativeAds)
+        }
+      }
+    } else {
+      listener = object : EMMANativeAdInterface {
+        override fun onShown(campaign: EMMACampaign) {
+          // Not implemented
+        }
+
+        override fun onHide(campaign: EMMACampaign) {
+          // Not implemented
+        }
+
+        override fun onClose(campaign: EMMACampaign) {
+          // Not implemented
+        }
+
+        override fun onReceived(nativeAd: EMMANativeAd) {
+          onReceiveNativeAds(listOf(nativeAd))
+        }
+      }
+    }
+
+    EMMA.getInstance().getInAppMessage(request, listener)
+    result.success(null)
+  }
+
+  private fun onReceiveNativeAds(nativeAds: List<EMMANativeAd>) {
+    val convertedNativeAds = convertNativeAdsToMap(nativeAds)
+    Utils.executeOnMainThread(channel, "Emma#onReceiveNativeAds", convertedNativeAds)
+  }
+
+  private fun startPushSystem(@NonNull call: MethodCall, @NonNull result: Result) {
+    val notificationIcon = call.argument<String>("notificationIcon")
+            ?: return returnError(result, call.method, "notificationIcon")
+    val pushIcon = Utils.getNotificationIcon(applicationContext, notificationIcon)
+
+    val defaultChannel  = Utils.getAppName(applicationContext) ?: "EMMA"
+
+    val channelName = call.argument<String>("notificationChannel") ?: defaultChannel
+    val notificationChannelId = call.argument<String>("notificationChannelId")
+
+    if (pushIcon == 0) {
+      return returnError(result, call.method, "pushIcon")
+    }
+
+    val pushOpt = EMMAPushOptions.Builder(activity::class.java, pushIcon)
+            .setNotificationChannelName(channelName)
+
+    if (null == notificationChannelId) {
+      pushOpt.setNotificationChannelId(notificationChannelId)
+    }
+
+    EMMA.getInstance().startPushSystem(pushOpt.build())
+    result.success(null)
+  }
+
+  private fun convertNativeAdsToMap(@NonNull nativeAds: List<EMMANativeAd>): ArrayList<Map<String, Any>> {
+    val mapNativeAds = arrayListOf<Map<String, Any>>()
+    for (nativeAd in nativeAds) {
+      val nativeAdMap = EmmaSerializer.nativeAdToMap(nativeAd)
+      nativeAdMap?.let {
+        mapNativeAds.add(nativeAdMap)
+      }
+    }
+    return mapNativeAds
   }
 }

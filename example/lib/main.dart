@@ -3,6 +3,7 @@ import 'dart:async';
 
 import 'package:flutter/services.dart';
 import 'package:emma_flutter_sdk/emma_flutter_sdk.dart';
+import 'dart:developer';
 
 void main() {
   runApp(MyApp());
@@ -23,19 +24,23 @@ class _MyAppState extends State<MyApp> {
     initEMMA()
         .then((value) => initEMMAPush())
         .then((value) => trackUserProfile());
+
   }
 
   Future<void> initEMMA() async {
-    return await EmmaFlutterSdk.startSession('emmaflutter2BMRb2NQ0',
+    await EmmaFlutterSdk.shared.startSession('emmaflutter2BMRb2NQ0',
         debugEnabled: true);
+    EmmaFlutterSdk.shared.setReceivedNativeAdsHandler((List<EmmaNativeAd> nativeAds){
+      print(nativeAds);
+    });
   }
 
   Future<void> initEMMAPush() async {
-    return await EmmaFlutterSdk.startPushSystem('notification_icon');
+    return await EmmaFlutterSdk.shared.startPushSystem('notification_icon');
   }
 
   Future<void> trackUserProfile() async {
-    return await EmmaFlutterSdk.trackExtraUserInfo({'TEST_TAG': 'TEST VALUE'});
+    return await EmmaFlutterSdk.shared.trackExtraUserInfo({'TEST_TAG': 'TEST VALUE'});
   }
 
   // Platform messages are asynchronous, so we initialize in an async method.
@@ -43,7 +48,7 @@ class _MyAppState extends State<MyApp> {
     String platformVersion;
     // Platform messages may fail, so we use a try/catch PlatformException.
     try {
-      platformVersion = await EmmaFlutterSdk.getEMMAVersion();
+      platformVersion = await EmmaFlutterSdk.shared.getEMMAVersion();
     } on PlatformException {
       platformVersion = 'Failed to get platform version.';
     }
@@ -69,7 +74,7 @@ class _MyAppState extends State<MyApp> {
             child: Column(children: <Widget>[
           RaisedButton(
             onPressed: () async {
-              await EmmaFlutterSdk.trackEvent(
+              await EmmaFlutterSdk.shared.trackEvent(
                   "2eb78caf404373625020285e92df446b");
             },
             child:
@@ -77,23 +82,33 @@ class _MyAppState extends State<MyApp> {
           ),
           RaisedButton(
             onPressed: () async {
-              await EmmaFlutterSdk.loginUser("1", "emma@flutter.dev");
+              await EmmaFlutterSdk.shared.loginUser("1", "emma@flutter.dev");
             },
             child:
                 const Text('Send Login Event', style: TextStyle(fontSize: 20)),
           ),
           RaisedButton(
             onPressed: () async {
-              await EmmaFlutterSdk.registerUser("1", "emma@flutter.dev");
+              await EmmaFlutterSdk.shared.registerUser("1", "emma@flutter.dev");
             },
             child: const Text('Send Register Event',
                 style: TextStyle(fontSize: 20)),
           ),
           RaisedButton(
             onPressed: () async {
-              await EmmaFlutterSdk.inAppMessage(InAppType.startview);
+              await EmmaFlutterSdk.shared.inAppMessage(new EmmaInAppMessageRequest(InAppType.startview));
             },
             child: const Text('Check For StartView',
+                style: TextStyle(fontSize: 20)),
+          ),
+          RaisedButton(
+            onPressed: () async {
+              var request = new EmmaInAppMessageRequest(InAppType.nativeAd);
+              request.batch = true;
+              request.templateId = "template1";
+              await EmmaFlutterSdk.shared.inAppMessage(request);
+            },
+            child: const Text('Check For NativeAd',
                 style: TextStyle(fontSize: 20)),
           )
         ])),
