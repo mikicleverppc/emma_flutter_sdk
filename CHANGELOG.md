@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.6
+
+* Inapp message native ad
+* Fixes and improves
+
 ## 1.0.5
 
 * Send push open
