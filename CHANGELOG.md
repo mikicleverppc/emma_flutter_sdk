@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.7
+
+* Update native dependency to latest version 4.8.0
+
 ## 1.0.6
 
 * Inapp message native ad

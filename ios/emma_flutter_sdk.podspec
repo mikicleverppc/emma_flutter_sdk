@@ -22,5 +22,5 @@ Pod::Spec.new do |s|
   s.swift_version = '5.0'
 
   # dependencies
-  s.dependency 'eMMa'
+  s.dependency 'eMMa', '~> 4.8.0'
 end
