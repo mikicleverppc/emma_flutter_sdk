@@ -3,7 +3,6 @@ import 'dart:async';
 
 import 'package:flutter/services.dart';
 import 'package:emma_flutter_sdk/emma_flutter_sdk.dart';
-import 'dart:developer';
 
 void main() {
   runApp(MyApp());
@@ -30,8 +29,11 @@ class _MyAppState extends State<MyApp> {
   Future<void> initEMMA() async {
     await EmmaFlutterSdk.shared.startSession('emmaflutter2BMRb2NQ0',
         debugEnabled: true);
+
     EmmaFlutterSdk.shared.setReceivedNativeAdsHandler((List<EmmaNativeAd> nativeAds){
-      print(nativeAds);
+      nativeAds.forEach((nativeAd) {
+        print(nativeAd.toMap());
+      });
     });
   }
 
@@ -61,6 +63,18 @@ class _MyAppState extends State<MyApp> {
     setState(() {
       _platformVersion = platformVersion;
     });
+  }
+
+  Future<void> sendNativeAdImpression(EmmaNativeAd nativeAd) async {
+    return await EmmaFlutterSdk.shared.sendInAppImpression(InAppType.nativeAd, nativeAd.id);
+  }
+
+  Future<void> sendNativeAdClick(EmmaNativeAd nativeAd) async {
+    return await EmmaFlutterSdk.shared.sendInAppImpression(InAppType.nativeAd, nativeAd.id);
+  }
+
+  Future<void> openNativeAd(EmmaNativeAd nativeAd) async {
+    return await EmmaFlutterSdk.shared.openNativeAd(nativeAd);
   }
 
   @override

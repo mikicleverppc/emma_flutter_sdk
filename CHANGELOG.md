@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.8
+
+* Added new methods sendInAppImpression and sendInAppClick to send impression or/and click for nativeAd
+* Added new method openNativeAd to execute CTA action (open webview on browser or inapp)
+
 ## 1.0.7
 
 * Update native dependency to latest version 4.8.0

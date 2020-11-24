@@ -67,23 +67,18 @@ class EmmaFlutterSdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
       "startPushSystem" -> {
         startPushSystem(call, result)
       }
+      "sendInAppImpression" -> {
+        sendInAppImpressionOrClick(true, call, result)
+      }
+      "sendInAppClick" -> {
+        sendInAppImpressionOrClick(false, call, result)
+      }
+      "openNativeAd" -> {
+        openNativeAd(call, result)
+      }
       else -> {
         EMMALog.w("Method ${call.method} not implemented")
         Utils.runOnMainThread(Runnable { result.notImplemented() })
-      }
-    }
-  }
-
-  fun getInAppRequestTypeFromString(type: String): EMMACampaign.Type? {
-    when(type) {
-      "startview" -> {
-        return EMMACampaign.Type.STARTVIEW
-      }
-      "nativeAd" -> {
-        return EMMACampaign.Type.NATIVEAD
-      }
-      else -> {
-        return null
       }
     }
   }
@@ -169,7 +164,7 @@ class EmmaFlutterSdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     val inAppRequestType = call.argument<String>("inAppType")
             ?: return returnError(result, call.method, "inAppType")
 
-    val inappType = getInAppRequestTypeFromString(inAppRequestType)
+    val inappType = EmmaSerializer.getInAppRequestTypeFromString(inAppRequestType)
     if (null == inappType) {
       EMMALog.w("Invalid inapp type $inAppRequestType. Skip request.")
       result.success(null)
@@ -258,7 +253,7 @@ class EmmaFlutterSdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     val pushOpt = EMMAPushOptions.Builder(activity::class.java, pushIcon)
             .setNotificationChannelName(channelName)
 
-    if (null == notificationChannelId) {
+    if (notificationChannelId == null) {
       pushOpt.setNotificationChannelId(notificationChannelId)
     }
 
@@ -275,5 +270,51 @@ class EmmaFlutterSdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
       }
     }
     return mapNativeAds
+  }
+
+  private fun sendInAppImpressionOrClick(sendImpression: Boolean, @NonNull call: MethodCall, @NonNull result: Result) {
+
+    val type = call.argument<String>("type")
+    val campaignId = call.argument<Int>("campaignId")
+
+    if (type == null || campaignId == null) {
+      result.success(null)
+      EMMALog.w("inApp type or campaign id cannot be null")
+      return
+    }
+
+    val campaignType = EmmaSerializer.getInAppRequestTypeFromString(type)
+    val communicationType = EmmaSerializer.inAppTypeToCommType(campaignType)
+
+    if (campaignType == null || communicationType == null) {
+      result.success(null)
+      EMMALog.w("Invalid inapp type or campaign id")
+      return
+    }
+
+    val campaign = EMMACampaign(campaignType)
+    campaign.campaignID = campaignId
+
+    if (sendImpression) {
+      EMMA.getInstance().sendInAppImpression(communicationType, campaign)
+    } else {
+      EMMA.getInstance().sendInAppClick(communicationType, campaign)
+    }
+
+    result.success(null)
+  }
+
+  private fun openNativeAd(@NonNull call: MethodCall, @NonNull result: Result) {
+    val id = call.argument<Int>("id")
+    val cta = call.argument<String>("cta")
+    val showOn = call.argument<String>("showOn")
+
+    val nativeAd = EMMANativeAd()
+    nativeAd.campaignID = id
+    nativeAd.campaignUrl = cta
+    nativeAd.setShowOn(if (showOn != null && showOn == "browser") 1 else 0)
+    EMMA.getInstance().setCurrentActivity(activity)
+    EMMA.getInstance().openNativeAd(nativeAd)
+    result.success(null)
   }
 }

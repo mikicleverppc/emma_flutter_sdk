@@ -1,7 +1,8 @@
 import 'dart:async';
 import 'package:flutter/services.dart';
-import 'src/inapp_message_request.dart';
-import 'src/native_ad.dart';
+import 'package:emma_flutter_sdk/src/defines.dart';
+import 'package:emma_flutter_sdk/src/inapp_message_request.dart';
+import 'package:emma_flutter_sdk/src/native_ad.dart';
 
 export 'src/defines.dart';
 export 'src/native_ad.dart';
@@ -49,51 +50,45 @@ class EmmaFlutterSdk {
   /// This log is only visible on device consoles
   Future<void> startSession(String sessionKey,
       {bool debugEnabled = false}) async {
-    await _channel.invokeMethod('startSession',
+   return  await _channel.invokeMethod('startSession',
         {'sessionKey': sessionKey, 'debugEnabled': debugEnabled});
-    return;
   }
 
   /// Send an event to emma identified by [eventToken].
   /// You can also assign some attributtes to this event with [eventArguments]
   Future<void> trackEvent(String eventToken,
       {Map<String, String> eventArguments}) async {
-    await _channel.invokeMethod('trackEvent',
+    return await _channel.invokeMethod('trackEvent',
         {'eventToken': eventToken, 'eventArguments': eventArguments});
-    return;
   }
 
   /// You can complete user profile with extra parameters
   Future<void> trackExtraUserInfo(
       Map<String, String> extraUserInfo) async {
-    await _channel
+    return await _channel
         .invokeMethod('trackExtraUserInfo', {'extraUserInfo': extraUserInfo});
-    return;
   }
 
   /// Sends a login to EMMA
   /// [userId] is your customer id for this user
   /// [email] is a unique email of this user
   Future<void> loginUser(String userId, String email) async {
-    await _channel
+    return await _channel
         .invokeMethod('loginUser', {'userId': userId, 'email': email});
-    return;
   }
 
   /// Sends register event to EMMA
   /// [userId] is your customer id for this user
   /// [email] is a unique email of this user
   Future<void> registerUser(String userId, String email) async {
-    await _channel
+    return await _channel
         .invokeMethod('registerUser', {'userId': userId, 'email': email});
-    return;
   }
 
   /// Checks for an InApp Message
   /// You must pass [EmmaInAppMessageRequest] of message you're expecting
   Future<void> inAppMessage(EmmaInAppMessageRequest request) async {
-    await _channel.invokeMethod('inAppMessage', request.toMap());
-    return;
+    return await _channel.invokeMethod('inAppMessage', request.toMap());
   }
 
   /// Init EMMA Push system
@@ -102,8 +97,29 @@ class EmmaFlutterSdk {
   /// Optional param [notificationChannelId] to subscribe an existent channel.
   Future<void> startPushSystem(String notificationIcon,
       {String notificationChannel = null, String notificationChannelId = null} ) async {
-    await _channel.invokeMethod('startPushSystem', {'notificationIcon': notificationIcon,
+    return await _channel.invokeMethod('startPushSystem', {'notificationIcon': notificationIcon,
       'notificationChannel': notificationChannel, 'notificationChannelId': notificationChannelId});
-    return;
+  }
+
+  /// Sends impression associated with inapp campaign. This method is mainly used to send native Ad impressions.
+  /// Formats startview, banner, adball send impression automatically
+  /// [campaignId] The campaign identifier
+  Future<void> sendInAppImpression(InAppType inAppType, int campaignId) async {
+    String type = inAppType.toString().split(".")[1];
+    return await _channel.invokeMethod('sendInAppImpression', {"type": type, "campaignId": campaignId});
+  }
+
+  /// Sends click associated with inapp campaign. This method is mainly used to send native ad clicks.
+  /// Formats startview, banner, adball send click automatically
+  /// [campaignId] The campaign identifier
+  Future<void> sendInAppClick(InAppType inAppType, int campaignId) async {
+    String type = inAppType.toString().split(".")[1];
+    return await _channel.invokeMethod('sendInAppClick',{"type": type, "campaignId": campaignId});
+  }
+
+  /// Opens native ad CTA inapp or outapp. This method track native ad click automatically. It is not necessary call to sendInAppClick method.
+  /// [nativeAd] The native ad
+  Future<void> openNativeAd(EmmaNativeAd nativeAd) async {
+    return await _channel.invokeMethod('openNativeAd', nativeAd.toMap());
   }
 }
