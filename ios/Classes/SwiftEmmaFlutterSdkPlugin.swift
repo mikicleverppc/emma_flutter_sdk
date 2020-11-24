@@ -136,6 +136,15 @@ public class SwiftEmmaFlutterSdkPlugin: NSObject, FlutterPlugin {
             setPushDelegates()
             result(nil)
             break
+        case "sendInAppImpression":
+            sendInAppImpressionOrClick(isInAppImpression:true , call, result)
+            break
+        case "sendInAppClick":
+            sendInAppImpressionOrClick(isInAppImpression:false , call, result)
+            break
+        case "openNativeAd":
+            openNativeAd(call, result)
+            break
         default:
             result(FlutterMethodNotImplemented)
             break
@@ -269,7 +278,7 @@ public class SwiftEmmaFlutterSdkPlugin: NSObject, FlutterPlugin {
             return
         }
         
-        guard let requestType = getInAppTypeFromString(inAppType: inAppType) else {
+        guard let requestType = EmmaSerializer.inAppTypeFromString(inAppType: inAppType) else {
             result(FlutterError.init(code: "BAD_INAPP_TYPE",
                                      message: "Unknown inapp type",
                                      details: nil))
@@ -313,17 +322,6 @@ public class SwiftEmmaFlutterSdkPlugin: NSObject, FlutterPlugin {
         EMMA.startPushSystem()
     }
     
-    func getInAppTypeFromString(inAppType: String) -> InAppType? {
-        switch inAppType {
-        case "startview":
-            return .Startview
-        case "nativeAd":
-            return .NativeAd
-        default:
-            return nil
-        }
-    }
-    
     public func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [AnyHashable : Any] = [:]) -> Bool {
         guard let notification = launchOptions[UIApplication.LaunchOptionsKey.remoteNotification] else {
             return true
@@ -332,6 +330,71 @@ public class SwiftEmmaFlutterSdkPlugin: NSObject, FlutterPlugin {
         EMMA.handlePush(notification as? [AnyHashable : Any])
         
         return true
+    }
+    
+    func sendInAppImpressionOrClick(isInAppImpression: Bool, _ call: FlutterMethodCall, _ result: @escaping FlutterResult) {
+        guard let args = call.arguments as? Dictionary<String, AnyObject> else {
+            result(FlutterError.init(code: "BAD_ARGS",
+                                     message: "Can't find args",
+                                     details: nil))
+            return
+        }
+        
+        guard let type = args["type"] as? String else {
+            result(FlutterError.init(code: "BAD_INAPP_TYPE",
+                                     message: "Unknown inapp type",
+                                     details: nil))
+            return
+        }
+        
+        guard let campaignId = args["campaignId"] as? Int else {
+            result(FlutterError.init(code: "BAD_CAMPAIGN_ID",
+                                     message: "Unknown campaign id",
+                                     details: nil))
+            return
+        }
+        
+        
+        guard let campaignType = EmmaSerializer.inAppTypeFromString(inAppType: type) else {
+            result(FlutterError.init(code: "BAD_INAPP_TYPE",
+                                     message: "Not supported inapp type",
+                                     details: nil))
+            return
+        }
+        
+        guard let communicationType = EmmaSerializer.inAppTypeToCommType(type: campaignType) else {
+            result(FlutterError.init(code: "BAD_CAMPAIGN_TYPE",
+                                     message: "Not supported campaign type",
+                                     details: nil))
+            return
+        }
+        
+        if (isInAppImpression) {
+            EMMA.sendImpression(communicationType, withId: String(campaignId))
+        } else {
+            EMMA.sendClick(communicationType, withId: String(campaignId))
+        }
+
+       result(nil)
+    }
+    
+    func openNativeAd(_ call: FlutterMethodCall, _ result: @escaping FlutterResult) {
+        guard let args = call.arguments as? Dictionary<String, AnyObject> else {
+            result(FlutterError.init(code: "BAD_ARGS",
+                                     message: "Can't find args",
+                                     details: nil))
+            return
+        }
+        
+        guard let id = args["id"] as? Int else {
+            result(FlutterError.init(code: "BAD_CAMPAIGN_ID",
+                                     message: "Unknown campaign id",
+                                     details: nil))
+            return
+        }
+        
+        EMMA.openNativeAd(String(id))
+        result(nil)
     }
 }
 

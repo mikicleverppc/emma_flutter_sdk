@@ -70,7 +70,7 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<void> sendNativeAdClick(EmmaNativeAd nativeAd) async {
-    return await EmmaFlutterSdk.shared.sendInAppImpression(InAppType.nativeAd, nativeAd.id);
+    return await EmmaFlutterSdk.shared.sendInAppClick(InAppType.nativeAd, nativeAd.id);
   }
 
   Future<void> openNativeAd(EmmaNativeAd nativeAd) async {
