@@ -129,7 +129,7 @@ class EmmaFlutterSdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             ?: return returnError(result, call.method, "eventToken")
     val eventRequest = EMMAEventRequest(eventToken)
 
-    call.argument<HashMap<String, Any>>("eventAttributes").let { attributes ->
+    call.argument<HashMap<String, Any>>("eventArguments").let { attributes ->
       eventRequest.attributes = attributes
     }
 

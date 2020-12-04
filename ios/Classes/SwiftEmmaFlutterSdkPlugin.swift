@@ -197,8 +197,8 @@ public class SwiftEmmaFlutterSdkPlugin: NSObject, FlutterPlugin {
         }
         
         let eventRequest = EMMAEventRequest(token: eventToken)
-        if let eventAttributes = args["eventAttributes"] as? Dictionary<String, AnyObject>  {
-            eventRequest?.attributes = eventAttributes
+        if let eventArguments = args["eventArguments"] as? Dictionary<String, AnyObject>  {
+            eventRequest?.attributes = eventArguments
         }
         EMMA.trackEvent(eventRequest)
         result(nil)
