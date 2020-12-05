@@ -37,6 +37,13 @@ class EMMAFlutterAppDelegate {
     }
     
     @objc
+    func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey : Any] = [:]) -> Bool {
+        // Every link opened by the app is processed by EMMA
+        EMMA.handleLink(url)
+        return true
+    }
+    
+    @objc
     @available(iOS 10.0, *)
     func userNotificationCenter(_ center: UNUserNotificationCenter,  willPresent notification: UNNotification, withCompletionHandler   completionHandler: @escaping (_ options:   UNNotificationPresentationOptions) -> Void) {
         EMMA.handlePush(notification.request.content.userInfo)
@@ -72,7 +79,7 @@ class EMMAFlutterAppDelegate {
         swizzles.append((#selector(FlutterAppDelegate.application(_:didRegisterForRemoteNotificationsWithDeviceToken:)),
                          #selector(EMMAFlutterAppDelegate.self.application(_:didRegisterForRemoteNotificationsWithDeviceToken:))))
         
-        
+        swizzles.append((#selector(FlutterAppDelegate.application(_:open:options:)), #selector(EMMAFlutterAppDelegate.self.application(_:open:options:))))
         for s in swizzles {
             
             let originalSelector = s.0
