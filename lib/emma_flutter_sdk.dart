@@ -122,4 +122,10 @@ class EmmaFlutterSdk {
   Future<void> openNativeAd(EmmaNativeAd nativeAd) async {
     return await _channel.invokeMethod('openNativeAd', nativeAd.toMap());
   }
+
+  /// [Android Only] Checks if rich push is available after push is opened.
+  /// This method can be called anywhere in app.
+  Future<void> checkForRichPush() async {
+    return await _channel.invokeMethod('checkForRichPush');
+  }
 }

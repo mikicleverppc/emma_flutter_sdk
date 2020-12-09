@@ -2,6 +2,7 @@ package io.emma.emma_flutter_sdk
 
 import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import androidx.annotation.NonNull
 import androidx.annotation.Nullable
 import io.emma.android.EMMA
@@ -17,22 +18,22 @@ import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 import io.emma.android.model.*
+import io.flutter.plugin.common.PluginRegistry
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 
 /** EmmaFlutterSdkPlugin */
-class EmmaFlutterSdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
+class EmmaFlutterSdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, PluginRegistry.NewIntentListener {
   /// The MethodChannel that will the communication between Flutter and native Android
   ///
   /// This local reference serves to register the plugin with the Flutter Engine anad unregister it
   /// when the Flutter Engine is detached from the Activity
   private lateinit var channel: MethodChannel
-
   private lateinit var applicationContext: Context
-
   private lateinit var activity: Activity
-
   private lateinit var assets: FlutterPlugin.FlutterAssets
+  private var activityPluginBinding: ActivityPluginBinding? = null
+
 
   override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
     applicationContext = flutterPluginBinding.applicationContext
@@ -76,6 +77,9 @@ class EmmaFlutterSdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
       "openNativeAd" -> {
         openNativeAd(call, result)
       }
+      "checkForRichPush" -> {
+        checkForRichPush(result)
+      }
       else -> {
         EMMALog.w("Method ${call.method} not implemented")
         Utils.runOnMainThread(Runnable { result.notImplemented() })
@@ -91,21 +95,32 @@ class EmmaFlutterSdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     result.error("METHOD_ERROR", "Error in: $methodName", "Error in parameter: $parameter" ?: null)
   }
 
-  override fun onDetachedFromActivity() {
-    // Not implemented
-  }
-
-  override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
-    // Not implemented
-  }
-
-  override fun onAttachedToActivity(binding: ActivityPluginBinding) {
+  private fun attachBindingActivity(binding: ActivityPluginBinding) {
     activity = binding.activity;
+    activityPluginBinding = binding
+    binding.addOnNewIntentListener(this)
     EMMA.getInstance().setCurrentActivity(activity)
   }
 
+  private fun removeBindingActivity() {
+    activityPluginBinding?.removeOnNewIntentListener(this)
+    activityPluginBinding = null
+  }
+
+  override fun onDetachedFromActivity() {
+    removeBindingActivity()
+  }
+
+  override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
+   attachBindingActivity(binding)
+  }
+
+  override fun onAttachedToActivity(binding: ActivityPluginBinding) {
+    attachBindingActivity(binding)
+  }
+
   override fun onDetachedFromActivityForConfigChanges() {
-    // Not implemented
+    removeBindingActivity()
   }
 
   private fun startSession(@NonNull call: MethodCall, @NonNull result: Result) {
@@ -171,6 +186,7 @@ class EmmaFlutterSdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
       return
     }
 
+    EMMA.getInstance().setCurrentActivity(activity)
     if (EMMACampaign.Type.NATIVEAD == inappType) {
       inappMessageNativeAd(call, result)
     } else {
@@ -313,8 +329,17 @@ class EmmaFlutterSdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     nativeAd.campaignID = id
     nativeAd.campaignUrl = cta
     nativeAd.setShowOn(if (showOn != null && showOn == "browser") 1 else 0)
-    EMMA.getInstance().setCurrentActivity(activity)
     EMMA.getInstance().openNativeAd(nativeAd)
+    result.success(null)
+  }
+
+  override fun onNewIntent(intent: Intent?): Boolean {
+    EMMA.getInstance().onNewNotification(intent, true)
+    return true
+  }
+
+  private fun checkForRichPush(@NonNull result: Result) {
+    EMMA.getInstance().checkForRichPushUrl()
     result.success(null)
   }
 }
