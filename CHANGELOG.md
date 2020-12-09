@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.9
+
+* Added new method checkForRichPush for Android
+
 ## 1.0.8
 
 * Added new methods sendInAppImpression and sendInAppClick to send impression or/and click for nativeAd
