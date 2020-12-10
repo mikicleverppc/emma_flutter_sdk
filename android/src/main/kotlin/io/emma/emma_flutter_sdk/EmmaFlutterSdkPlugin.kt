@@ -191,7 +191,6 @@ class EmmaFlutterSdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Pl
       inappMessageNativeAd(call, result)
     } else {
       val request = EMMAInAppRequest(inappType)
-      EMMA.getInstance().setCurrentActivity(activity)
       EMMA.getInstance().getInAppMessage(request)
       result.success(null)
     }
