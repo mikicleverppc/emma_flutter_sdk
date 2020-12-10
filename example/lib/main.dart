@@ -124,7 +124,14 @@ class _MyAppState extends State<MyApp> {
             },
             child: const Text('Check For NativeAd',
                 style: TextStyle(fontSize: 20)),
-          )
+          ),
+            RaisedButton(
+              onPressed: () async {
+                await EmmaFlutterSdk.shared.checkForRichPush();
+              },
+              child: const Text('Check For Rich Push',
+                  style: TextStyle(fontSize: 20)),
+            )
         ])),
       ),
     );
